@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cert-manager-issuer
+  namespace: cert-manager-issuer
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: cert-manager-issuer
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: cert-manager-issuer
+    spec:
+      containers:
+      - image: <change to your image>
+        imagePullPolicy: IfNotPresent
+        name: cert-manager-issuer
+        volumeMounts:
+        - name: ca-certs
+          mountPath: "/etc/ca-certs"
+        env:
+        - name: WATCHER_NAMESPACE
+          value: <change to namespace that you want to watch>
+        - name: CA_CERTS_PATH
+          value: "/etc/ca-certs"
+        resources:
+          requests:
+            cpu: 100m
+            memory: 100Mi
+          limits:
+            cpu: 500m
+            memory: 200Mi
+      volumes:
+        - name: ca-certs
+          secret:
+            secretName: erai-ca-keypair
+      serviceAccount: cert-manager-issuer
+      dnsPolicy: ClusterFirst
+      restartPolicy: Always
