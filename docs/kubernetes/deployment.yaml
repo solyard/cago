@@ -25,6 +25,8 @@ spec:
           value: <change to namespace that you want to watch>
         - name: CA_CERTS_PATH
           value: "/etc/ca-certs"
+        - name: POLLING_INTERVAL_SECONDS
+          value: "3600"
         resources:
           requests:
             cpu: 100m
