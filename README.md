@@ -1,6 +1,6 @@
-# Cert Manager Issuer
+# Cert Manager CRL Manager
 
-**Cert Manager Issuer** - it's a simple tool that can integrate with Kubernetes Cert Manager installation and implement functionality that need to use Cert Manager as Certificate Authority with CRL support
+**Cert Manager Issuer CRL Manager ** - it's a simple tool that can integrate with Kubernetes Cert Manager installation and implement functionality that need to use Cert Manager as Certificate Authority with CRL support
 
 ## How it works ?
 
