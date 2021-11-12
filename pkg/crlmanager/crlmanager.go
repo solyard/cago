@@ -49,6 +49,12 @@ func GenerateCRL(issuedCerts []*models.CertificateMetadata) ([]byte, []byte) {
 		log.Errorf("Error while parse CA certificate! Error: %v", err)
 	}
 
+	if (crlSubject.KeyUsage & x509.KeyUsageCRLSign) == 0 {
+		log.Warn("!!! YOU ARE TRY TO USE CERTIFICATE WITHOUT singCrl KEY USAGE BIT !!!")
+		crlSubject.KeyUsage |= x509.KeyUsageCRLSign
+		log.Warn("!!! KEY USAGE CRL SIGN WAS FORCED ADDED TO CERTIFICATE !!!")
+	}
+
 	privkeyfile, err := os.ReadFile(fmt.Sprintf("%v/tls.key", os.Getenv("CA_CERTS_PATH")))
 	if err != nil {
 		log.Errorf("Error while read CA private key. Error: %v", err)
