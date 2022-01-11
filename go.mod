@@ -3,7 +3,6 @@ module github.com/cert-manager-issuer
 go 1.17
 
 require (
-	github.com/gorilla/mux v1.8.0
 	github.com/sirupsen/logrus v1.8.1
 	k8s.io/apimachinery v0.22.3
 	k8s.io/client-go v0.22.3
