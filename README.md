@@ -1,6 +1,3 @@
-# CAGO
----
-
 **CAGo** - it's a Certificate Authority (CA) realization written in golang
 
 ## How to install?
