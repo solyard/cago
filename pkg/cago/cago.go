@@ -25,7 +25,7 @@ func GenerateCRL(issuedCerts []*models.CertificateMetadata) ([]byte, []byte) {
 		if cert.Revoked != "" {
 			certDecoded, err := base64.StdEncoding.DecodeString(cert.Certificate)
 			if err != nil {
-				log.Errorf("Error while encode certificate to base64. Error: %s", err)
+				log.Errorf("Error while decode certificate from base64. Error: %s", err)
 			}
 			certificate, _ := pem.Decode([]byte(certDecoded))
 			crt, err := x509.ParseCertificate(certificate.Bytes)
