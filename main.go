@@ -5,8 +5,8 @@ import (
 	"strconv"
 	"time"
 
+	"github.com/cert-manager-issuer/pkg/cago"
 	"github.com/cert-manager-issuer/pkg/config"
-	"github.com/cert-manager-issuer/pkg/crlmanager"
 	"github.com/cert-manager-issuer/pkg/watcher"
 
 	log "github.com/sirupsen/logrus"
@@ -19,7 +19,7 @@ func init() {
 
 func checkRevokedCertificatesAndRegenerateCRL() {
 	revokedCertificates := watcher.StartKubernetesCertificateWatcher()
-	crl, ca := crlmanager.GenerateCRL(revokedCertificates)
+	crl, ca := cago.GenerateCRL(revokedCertificates)
 	watcher.WriteCRL(crl, ca)
 }
 func main() {

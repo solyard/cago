@@ -1,4 +1,4 @@
-package crlmanager
+package cago
 
 import (
 	"crypto"
@@ -24,6 +24,9 @@ func GenerateCRL(issuedCerts []*models.CertificateMetadata) ([]byte, []byte) {
 	for _, cert := range issuedCerts {
 		if cert.Revoked != "" {
 			certDecoded, err := base64.StdEncoding.DecodeString(cert.Certificate)
+			if err != nil {
+				log.Errorf("Error while encode certificate to base64. Error: %s", err)
+			}
 			certificate, _ := pem.Decode([]byte(certDecoded))
 			crt, err := x509.ParseCertificate(certificate.Bytes)
 			if err != nil {
@@ -82,8 +85,4 @@ func GenerateCRL(issuedCerts []*models.CertificateMetadata) ([]byte, []byte) {
 	crlPEM := pem.EncodeToMemory(&pem.Block{Type: "X509 CRL", Bytes: crl})
 
 	return crlPEM, cacertfile
-}
-
-func compareCRLWithPreviousVersion() {
-	//TODO
 }

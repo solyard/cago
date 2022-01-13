@@ -2,7 +2,6 @@ kind: ClusterRole
 apiVersion: rbac.authorization.k8s.io/v1
 metadata:
   name: cert-manager-issuer-watcher
-  namespace: cert-manager-issuer
 rules:
   - apiGroups: ["", "extensions", "apps", "cert-manager.io"]
     resources: ["secrets", "certificaterequests"]
@@ -14,11 +13,9 @@ apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRoleBinding
 metadata:
   name: cert-manager-issuer
-  namespace: cert-manager-issuer
 subjects:
 - kind: ServiceAccount
   name: cert-manager-issuer
-  namespace: cert-manager-issuer
   apiGroup: ""
 roleRef:
   kind: ClusterRole
