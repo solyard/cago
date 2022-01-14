@@ -12,5 +12,8 @@
 *.out
 
 # Development
+*.pem
 certs/
+crl/
 .wakatime-project
+.vscode
