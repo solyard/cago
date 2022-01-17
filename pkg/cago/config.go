@@ -12,7 +12,6 @@ func ReadConfig() {
 	_, envPresented = os.LookupEnv("CRL_NAMESPACE")
 	if !envPresented {
 		log.Fatal("Cannot find CRL_NAMESPACE variable. Must be missed in configuration!")
-		panic("")
 	}
 
 	_, envPresented = os.LookupEnv("CA_CERTS_PATH")

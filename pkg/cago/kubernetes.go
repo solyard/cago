@@ -61,4 +61,5 @@ func writeCRLToKubernetes(crl []byte, ca []byte) {
 	if err != nil {
 		log.Fatalf("Error creating Kubernetes Secret in %v namepsace. Error: %v", namespaceForCRLSecret, err)
 	}
+	log.Info("CRL file in Kubernetes Cluster was updated")
 }

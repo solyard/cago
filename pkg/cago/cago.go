@@ -17,7 +17,7 @@ func revokeCertificate(pem []byte, kubernetes bool) {
 		Revoked:     true,
 	}
 
-	crlPEM, cafile := GenerateCRL(&revokedCertificate)
+	crlPEM, cafile := ProcessCRLFile(&revokedCertificate, kubernetes)
 	if !kubernetes {
 		os.WriteFile("crl/crl.pem", crlPEM, 0744)
 		os.WriteFile("crl/ca.crt", cafile, 0744)

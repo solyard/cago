@@ -20,7 +20,7 @@ func ReadInput() {
 	processInput(pemFile, checkCA, revokeCheck, isFile, checkCRL, kubernetes)
 }
 
-func processInput(pem *string, cacheck *bool, revoke *bool, isfile *bool, checkcrl *bool, kubernetes *bool) {
+func processInput(pem *string, cacheck, revoke, isfile, checkcrl, kubernetes *bool) {
 	if *isfile {
 		if *revoke {
 			pemFile, err := os.ReadFile(*pem)

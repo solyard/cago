@@ -1,6 +1,7 @@
 package cago
 
 import (
+	"bufio"
 	"crypto"
 	"crypto/rand"
 	"crypto/rsa"
@@ -73,10 +74,33 @@ func loadCACerts() (*x509.Certificate, *rsa.PrivateKey, []byte) {
 	return caCertificate, privateKey, caCertificateFile
 }
 
-// GenerateCRL recieve array of certificates that need to be revoked by CA.
-func GenerateCRL(revokedCert *CertificateMetadata) ([]byte, []byte) {
+func findExistedCRL(kubernetes bool) ([]byte, bool) {
+	var crl []byte
+	if !kubernetes {
+		crl = getCRLFile("local")
+	} else {
+		crl = getCRLFile("kubernetes")
+	}
 
+	if crl == nil {
+		log.Error("CRL file cannot be find. Create NEW FILE? (yN):")
+		answer := bufio.NewScanner(os.Stdin)
+		if fmt.Sprint(answer.Text()) == "y" {
+			return nil, false
+		} else {
+			log.Exit(1)
+		}
+	} else {
+		return crl, true
+	}
+
+	return nil, false
+}
+
+// GenerateCRL it's core recieve array of certificates that need to be revoked by CA.
+func ProcessCRLFile(revokedCert *CertificateMetadata, kubernetes bool) ([]byte, []byte) {
 	caCertificate, privateKey, cacertfile := loadCACerts()
+	crl, crlexists := findExistedCRL(kubernetes)
 
 	if revokedCert.Revoked {
 		certificate, _ := pem.Decode([]byte(revokedCert.Certificate))
@@ -90,36 +114,63 @@ func GenerateCRL(revokedCert *CertificateMetadata) ([]byte, []byte) {
 			SerialNumber:   crt.SerialNumber,
 			RevocationTime: time.Now(),
 		}
-
 		revokedCerts = append(revokedCerts, clientRevocation)
 	}
 
-	tbsCertList := &x509.RevocationList{
-		SignatureAlgorithm:  0,
-		Number:              big.NewInt(1),
-		ThisUpdate:          time.Now(),
-		NextUpdate:          time.Now().Add(time.Hour * time.Duration(86400)),
-		RevokedCertificates: revokedCerts,
+	if !crlexists {
+		tbsCertList := &x509.RevocationList{
+			SignatureAlgorithm:  0,
+			Number:              big.NewInt(1),
+			ThisUpdate:          time.Now(),
+			NextUpdate:          time.Now().Add(time.Hour * time.Duration(86400)),
+			RevokedCertificates: revokedCerts,
+		}
+
+		var reader io.Reader
+		crl, err := x509.CreateRevocationList(reader, tbsCertList, caCertificate, crypto.Signer(privateKey))
+		if err != nil {
+			log.Errorf("Error while create CRL. Error: %v", err)
+			log.Exit(1)
+			return nil, nil
+		}
+		crlPEM := pem.EncodeToMemory(&pem.Block{Type: "X509 CRL", Bytes: crl})
+		return crlPEM, cacertfile
+
+	} else {
+		parsedcrl, err := x509.ParseCRL(crl)
+		if err != nil {
+			log.Error("Error while parse CRL for append revokedCertificates. Error: %v", err)
+			log.Exit(1)
+		}
+
+		parsedcrl.TBSCertList.RevokedCertificates = append(parsedcrl.TBSCertList.RevokedCertificates, revokedCerts...)
+
+		tbsCertList := &x509.RevocationList{
+			SignatureAlgorithm:  0,
+			Number:              big.NewInt(1),
+			ThisUpdate:          time.Now(),
+			NextUpdate:          time.Now().Add(time.Hour * time.Duration(86400)),
+			RevokedCertificates: parsedcrl.TBSCertList.RevokedCertificates,
+		}
+
+		crl, err := x509.CreateRevocationList(rand.Reader, tbsCertList, caCertificate, crypto.Signer(privateKey))
+		if err != nil {
+			log.Errorf("Error while create CRL. Error: %v", err)
+			log.Exit(1)
+			return nil, nil
+		}
+		crlPEM := pem.EncodeToMemory(&pem.Block{Type: "X509 CRL", Bytes: crl})
+		return crlPEM, cacertfile
 	}
 
-	var reader io.Reader
-	crl, err := x509.CreateRevocationList(reader, tbsCertList, caCertificate, crypto.Signer(privateKey))
-	if err != nil {
-		log.Errorf("Error while create CRL. Error: %v", err)
-		log.Exit(1)
-		return nil, nil
-	}
-	crlPEM := pem.EncodeToMemory(&pem.Block{Type: "X509 CRL", Bytes: crl})
-
-	return crlPEM, cacertfile
 }
 
 func getCRLFile(location string) []byte {
 	if location == "local" {
-		crl, err := os.ReadFile("crl.pem")
+		crl, err := os.ReadFile("crl/crl.pem")
 		if err != nil {
 			log.Error("Cannot find crl.pem. Error: ", err.Error())
-			log.Exit(1)
+			return nil
 		}
 
 		return crl
@@ -127,12 +178,12 @@ func getCRLFile(location string) []byte {
 		crldata, err := GetCRLFromKubernetes()
 		if err != nil {
 			log.Error("Error while get crl file from Kubernetes Cluster. Error: ", err)
-			log.Exit(1)
+			return nil
 		}
 		crl, err := base64.StdEncoding.DecodeString(string(crldata))
 		if err != nil {
 			log.Error("Error while decode base64 content from Kubernetes Cluster. Error: ", err)
-			log.Exit(1)
+			return nil
 		}
 
 		return crl
